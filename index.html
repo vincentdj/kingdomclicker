@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kingdom Clicker: Age of Empires</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game-wrapper">
+
+  <!-- ══════════════════════════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════════════════════════ -->
+  <header id="header">
+    <div id="game-title">
+      <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/imperial-crown.svg" alt=""
+           onerror="this.style.display='none'">
+      Kingdom Clicker
+    </div>
+
+    <div id="resources-bar">
+      <div class="res-chip">
+        <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/two-coins.svg" alt="Gold" onerror="this.style.display='none'">
+        <div class="res-data">
+          <span class="res-label">Gold</span>
+          <span class="res-value" id="res-gold">0</span>
+          <span class="res-rate"  id="rate-gold">0/s</span>
+        </div>
+      </div>
+      <div class="res-chip">
+        <img src="https://game-icons.net/icons/90c050/1a0e00/1x1/delapouite/wheat.svg" alt="Food" onerror="this.style.display='none'">
+        <div class="res-data">
+          <span class="res-label">Food</span>
+          <span class="res-value" id="res-food">0</span>
+          <span class="res-rate"  id="rate-food">0/s</span>
+        </div>
+      </div>
+      <div class="res-chip">
+        <img src="https://game-icons.net/icons/c87941/1a0e00/1x1/lorc/wood-beam.svg" alt="Wood" onerror="this.style.display='none'">
+        <div class="res-data">
+          <span class="res-label">Wood</span>
+          <span class="res-value" id="res-wood">0</span>
+          <span class="res-rate"  id="rate-wood">0/s</span>
+        </div>
+      </div>
+      <div class="res-chip">
+        <img src="https://game-icons.net/icons/b0a090/1a0e00/1x1/lorc/stone-block.svg" alt="Stone" onerror="this.style.display='none'">
+        <div class="res-data">
+          <span class="res-label">Stone</span>
+          <span class="res-value" id="res-stone">0</span>
+          <span class="res-rate"  id="rate-stone">0/s</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="header-right">
+      <div id="age-badge-header">Dark Age</div>
+      <button class="btn-header" onclick="saveGame(); addNotification('Game saved!')">Save</button>
+      <button class="btn-header danger" onclick="resetGame()">Prestige</button>
+      <button class="btn-header" id="mp-toggle-btn" onclick="toggleMultiplayerPanel()">⚔ Multiplayer</button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════
+       MAIN  [left | center | right]
+       ══════════════════════════════════════════════════════════ -->
+  <div id="main-area">
+
+    <!-- ── LEFT: Click + Workers ───────────────────────────── -->
+    <aside id="left-panel">
+
+      <div id="click-section">
+        <button id="btn-collect" onclick="clickKingdom(event)">
+          <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/two-coins.svg" alt=""
+               onerror="this.style.display='none'">
+          <span>Collect Taxes</span>
+          <span id="click-value" class="click-val">+1 gold</span>
+        </button>
+      </div>
+
+      <div class="side-section-title">
+        Workers
+        <span id="worker-count" class="section-subtitle"></span>
+      </div>
+      <div id="workers-list" class="scroll-list"></div>
+
+    </aside>
+
+    <!-- ── CENTER: Map + Army + Combat ─────────────────────── -->
+    <main id="center-panel">
+
+      <!-- MAP WORLD -->
+      <div id="map-wrapper">
+        <div id="map-world">
+
+          <!-- Decorative trees -->
+          <div class="map-tree" style="left:1%;top:4%">🌲</div>
+          <div class="map-tree" style="left:5%;top:1%">🌲</div>
+          <div class="map-tree" style="left:19%;top:3%">🌲</div>
+          <div class="map-tree" style="left:88%;top:11%">🌲</div>
+          <div class="map-tree" style="left:93%;top:4%">🌲</div>
+          <div class="map-tree" style="left:91%;top:25%">🌿</div>
+          <div class="map-tree" style="left:2%;top:57%">🌿</div>
+          <div class="map-tree" style="left:37%;top:90%">🌿</div>
+          <div class="map-tree" style="left:69%;top:91%">🌿</div>
+
+          <!-- River -->
+          <div class="map-river"></div>
+
+          <!-- Road -->
+          <div class="map-road"></div>
+
+          <!-- Town Center (always visible) -->
+          <div class="map-tc" title="Town Center">
+            <img src="https://game-icons.net/icons/c8a96e/1a0e00/1x1/delapouite/city.svg" alt=""
+                 onerror="this.style.display='none'">
+          </div>
+
+          <!-- Dynamic buildings injected by renderMap() -->
+          <div id="map-buildings"></div>
+
+          <!-- Overlays -->
+          <div id="map-age-badge">Dark Age</div>
+          <div id="map-population">Pop 0</div>
+
+        </div>
+      </div>
+
+      <!-- ARMY + COMBAT -->
+      <div id="army-combat">
+
+        <div class="ac-row">
+          <div class="ac-header-block">
+            <span class="ac-title">
+              <img src="https://game-icons.net/icons/c8a96e/1a0e00/1x1/delapouite/knight-helmet.svg"
+                   alt="" width="13" height="13" onerror="this.style.display='none'">
+              Army
+            </span>
+            <span class="ac-stat">Units <b id="army-size">0/100</b></span>
+            <span class="ac-stat">Power <b id="army-power">0</b></span>
+          </div>
+          <div class="ac-header-block">
+            <span class="ac-title">
+              <img src="https://game-icons.net/icons/c8c8c8/1a0e00/1x1/lorc/crossed-swords.svg"
+                   alt="" width="13" height="13" onerror="this.style.display='none'">
+              Combat
+            </span>
+            <div id="combat-stats" class="combat-inline-stats"></div>
+          </div>
+        </div>
+
+        <div class="ac-body">
+          <div id="unit-list" class="unit-grid"></div>
+
+          <div id="combat-controls">
+            <button id="btn-attack" onclick="launchAttack()">
+              <img src="https://game-icons.net/icons/c8c8c8/1a0e00/1x1/lorc/crossed-swords.svg"
+                   alt="" width="16" height="16" onerror="this.style.display='none'">
+              Attack!
+            </button>
+            <div id="combat-strategy" class="strategy-group">
+              <label class="strategy-label" title="+30% dmg / +30% losses">
+                <input type="radio" class="strategy-radio" name="strategy" value="aggressive">
+                ⚔ Aggressive
+              </label>
+              <label class="strategy-label" title="Standard">
+                <input type="radio" class="strategy-radio" name="strategy" value="balanced" checked>
+                ⚖ Balanced
+              </label>
+              <label class="strategy-label" title="-20% dmg / -50% losses">
+                <input type="radio" class="strategy-radio" name="strategy" value="defensive">
+                🛡 Defensive
+              </label>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /army-combat -->
+    </main>
+
+    <!-- ── RIGHT: Buildings + Research + Prestige ──────────── -->
+    <aside id="right-panel">
+
+      <!-- Buildings -->
+      <div class="panel-block">
+        <div class="panel-block-title">
+          <img src="https://game-icons.net/icons/c8a96e/1a0e00/1x1/delapouite/castle.svg"
+               alt="" width="13" height="13" onerror="this.style.display='none'">
+          Buildings
+        </div>
+        <div id="buildings-list" class="compact-list"></div>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Research -->
+      <div class="panel-block">
+        <div class="panel-block-title">
+          <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/upgrade.svg"
+               alt="" width="13" height="13" onerror="this.style.display='none'">
+          Research
+        </div>
+        <div class="upg-group-label">Economy</div>
+        <div id="upgrades-economy" class="upgrade-list"></div>
+        <div class="upg-group-label">Military</div>
+        <div id="upgrades-military" class="upgrade-list"></div>
+        <div class="upg-group-label">Defense</div>
+        <div id="upgrades-defense" class="upgrade-list"></div>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Prestige -->
+      <div class="panel-block prestige-block">
+        <div class="panel-block-title">
+          <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/imperial-crown.svg"
+               alt="" width="13" height="13" onerror="this.style.display='none'">
+          Crown &amp; Prestige
+        </div>
+        <div id="prestige-info"></div>
+        <div class="prestige-btns">
+          <button id="btn-prestige-prod"  class="btn-prestige" onclick="spendPrestigePoint('prod')"  title="+10% production">+Prod</button>
+          <button id="btn-prestige-click" class="btn-prestige" onclick="spendPrestigePoint('click')" title="+5% click power">+Click</button>
+          <button class="btn-prestige reset" onclick="resetGame()" title="Prestige reset">Reset</button>
+        </div>
+      </div>
+
+    </aside>
+
+  </div><!-- /main-area -->
+
+  <!-- ══════════════════════════════════════════════════════════
+       BOTTOM BAR: Event + Log
+       ══════════════════════════════════════════════════════════ -->
+  <div id="bottom-bar">
+    <div id="event-box"></div>
+    <div id="battle-log-wrap">
+      <div id="battle-log"></div>
+    </div>
+  </div>
+
+</div><!-- /game-wrapper -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     MULTIPLAYER PANEL (slide-in overlay, right side)
+     ══════════════════════════════════════════════════════════════ -->
+<div id="mp-panel">
+  <div class="mp-header">
+    ⚔ Multiplayer
+    <button class="mp-close" onclick="toggleMultiplayerPanel()">✕</button>
+  </div>
+
+  <div class="mp-body">
+
+    <!-- Status -->
+    <div>
+      <div class="mp-field-label">Status</div>
+      <div id="mp-status-text" class="mp-status-text mp-offline">Offline</div>
+    </div>
+
+    <!-- Player name -->
+    <div>
+      <div class="mp-field-label">Your name</div>
+      <input id="mp-player-name" class="mp-input" type="text"
+             placeholder="King XXXXX" oninput="mpUpdateName()">
+    </div>
+
+    <!-- Connect / Disconnect buttons -->
+    <button id="mp-btn-connect"    class="mp-btn primary" onclick="mpConnect()">Connect to Server</button>
+    <button id="mp-btn-disconnect" class="mp-btn danger"  onclick="mpDisconnect()" style="display:none">Disconnect</button>
+
+    <!-- Lobby: Create / Join session -->
+    <div id="mp-lobby-controls" style="display:none">
+      <div class="mp-section-title" style="margin-bottom:6px">Session</div>
+      <button class="mp-btn primary" onclick="mpCreateSession()" style="margin-bottom:5px">Create New Session</button>
+      <div class="mp-field-label">Join by Session ID</div>
+      <input id="mp-session-input" class="mp-input" type="text" placeholder="e.g. ABC123"
+             style="margin-bottom:5px">
+      <button class="mp-btn" onclick="mpJoinSession()">Join Session</button>
+    </div>
+
+    <!-- In-session: player list -->
+    <div id="mp-session-controls" style="display:none">
+      <div class="mp-section-title" style="margin-bottom:6px">Players in Session</div>
+      <div id="mp-player-list" class="mp-player-list">
+        <div class="mp-empty">No other players yet.</div>
+      </div>
+      <button class="mp-btn danger" onclick="mpLeaveSession()" style="margin-top:8px">Leave Session</button>
+    </div>
+
+    <div style="font-size:10px;color:var(--text-dim);margin-top:auto;padding-top:8px">
+      Run <code style="color:var(--gold)">npm start</code> in the game folder to start the
+      local multiplayer server on port 8080.
+    </div>
+
+  </div>
+</div>
+
+<!-- Notification toasts -->
+<div id="notifications"></div>
+
+<!-- ============================================================
+     SCRIPTS – load in dependency order
+     ============================================================ -->
+<script src="js/config.js"></script>
+<script src="js/state.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/render.js"></script>
+<script src="js/map.js"></script>
+<script src="js/multiplayer.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

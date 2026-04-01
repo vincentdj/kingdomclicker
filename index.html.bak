@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kingdom Clicker: Age of Empires</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game-wrapper">
+
+  <!-- ============================================================
+       HEADER / RESOURCE BAR
+       ============================================================ -->
+  <header id="header">
+    <div id="game-title">
+      Kingdom Clicker
+      <span>Age of Empires</span>
+    </div>
+
+    <div id="resources-bar">
+      <!-- Gold -->
+      <div class="res-chip">
+        <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/two-coins.svg" alt="Gold"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+        <span class="res-emoji" style="display:none">🪙</span>
+        <div class="res-data">
+          <span class="res-value"><span id="res-gold">0</span></span>
+          <span class="res-rate" id="rate-gold">0/s</span>
+        </div>
+      </div>
+
+      <!-- Food -->
+      <div class="res-chip">
+        <img src="https://game-icons.net/icons/90c050/1a0e00/1x1/delapouite/wheat.svg" alt="Food"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+        <span class="res-emoji" style="display:none">🌾</span>
+        <div class="res-data">
+          <span class="res-value"><span id="res-food">0</span></span>
+          <span class="res-rate" id="rate-food">0/s</span>
+        </div>
+      </div>
+
+      <!-- Wood -->
+      <div class="res-chip">
+        <img src="https://game-icons.net/icons/c87941/1a0e00/1x1/lorc/wood-beam.svg" alt="Wood"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+        <span class="res-emoji" style="display:none">🪵</span>
+        <div class="res-data">
+          <span class="res-value"><span id="res-wood">0</span></span>
+          <span class="res-rate" id="rate-wood">0/s</span>
+        </div>
+      </div>
+
+      <!-- Stone -->
+      <div class="res-chip">
+        <img src="https://game-icons.net/icons/b0a090/1a0e00/1x1/lorc/stone-block.svg" alt="Stone"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+        <span class="res-emoji" style="display:none">🪨</span>
+        <div class="res-data">
+          <span class="res-value"><span id="res-stone">0</span></span>
+          <span class="res-rate" id="rate-stone">0/s</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="header-actions">
+      <button class="btn-header" onclick="saveGame(); addNotification('Game saved!')">Save</button>
+      <button class="btn-header" onclick="resetGame()">Prestige Reset</button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       MAIN AREA
+       ============================================================ -->
+  <div id="main-area">
+
+    <!-- -------------------------------------------------------
+         LEFT PANEL – Kingdom view + Click + Workers
+         ------------------------------------------------------- -->
+    <div id="left-panel">
+
+      <!-- Kingdom Visual -->
+      <div id="kingdom-visual" class="kingdom-visual age-1">
+        <div class="kv-sun"></div>
+        <div class="kv-clouds">
+          <div class="kv-cloud"></div>
+          <div class="kv-cloud"></div>
+        </div>
+        <div id="current-age-badge">Dark Age</div>
+        <div class="kv-layer" id="kv-buildings">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Click Section -->
+      <div id="click-section">
+        <button id="btn-collect" onclick="clickKingdom(event)">
+          <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/two-coins.svg" alt=""
+               onerror="this.style.display='none'">
+          Collect Taxes
+          <span id="click-value">+1 gold</span>
+        </button>
+      </div>
+
+      <!-- Workers -->
+      <div id="workers-section">
+        <h3>
+          Workers
+          <span id="worker-count">0 workers</span>
+        </h3>
+        <div id="workers-list">
+          <!-- Populated by renderWorkers() -->
+        </div>
+      </div>
+
+    </div><!-- /left-panel -->
+
+
+    <!-- -------------------------------------------------------
+         CENTER PANEL – Tabs
+         ------------------------------------------------------- -->
+    <div id="center-panel">
+
+      <!-- Tab Bar -->
+      <div id="tab-bar">
+        <button class="tab-btn active" data-tab="buildings">
+          <img src="https://game-icons.net/icons/c8a96e/1a0e00/1x1/delapouite/castle.svg" alt=""
+               onerror="this.style.display='none'">
+          Buildings
+        </button>
+        <button class="tab-btn" data-tab="army">
+          <img src="https://game-icons.net/icons/c8c8c8/1a0e00/1x1/lorc/crossed-swords.svg" alt=""
+               onerror="this.style.display='none'">
+          Army
+        </button>
+        <button class="tab-btn" data-tab="combat">
+          <img src="https://game-icons.net/icons/c8c8c8/1a0e00/1x1/lorc/crossed-swords.svg" alt=""
+               onerror="this.style.display='none'">
+          Combat
+        </button>
+        <button class="tab-btn" data-tab="upgrades">
+          <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/upgrade.svg" alt=""
+               onerror="this.style.display='none'">
+          Research
+        </button>
+        <button class="tab-btn" data-tab="prestige">
+          <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/imperial-crown.svg" alt=""
+               onerror="this.style.display='none'">
+          Prestige
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div id="tab-content">
+
+        <!-- BUILDINGS TAB -->
+        <div class="tab-pane active" id="tab-buildings">
+          <h2>
+            <img src="https://game-icons.net/icons/c8a96e/1a0e00/1x1/delapouite/castle.svg" alt=""
+                 onerror="this.style.display='none'">
+            Construction
+          </h2>
+
+          <h3>Economy</h3>
+          <div id="buildings-list">
+            <!-- Populated by renderBuildings() -->
+          </div>
+        </div>
+
+        <!-- ARMY TAB -->
+        <div class="tab-pane" id="tab-army">
+          <h2>
+            <img src="https://game-icons.net/icons/c8a96e/1a0e00/1x1/delapouite/knight-helmet.svg" alt=""
+                 onerror="this.style.display='none'">
+            Army
+          </h2>
+
+          <div class="army-stats">
+            <div class="army-stat">Units: <b id="army-size">0 / 100</b></div>
+            <div class="army-stat">Power: <b id="army-power">0</b></div>
+          </div>
+
+          <h3>Train Units</h3>
+          <div id="unit-list">
+            <!-- Populated by renderArmy() -->
+          </div>
+        </div>
+
+        <!-- COMBAT TAB -->
+        <div class="tab-pane" id="tab-combat">
+          <h2>
+            <img src="https://game-icons.net/icons/c8c8c8/1a0e00/1x1/lorc/crossed-swords.svg" alt=""
+                 onerror="this.style.display='none'">
+            Combat
+          </h2>
+
+          <!-- Attack Button -->
+          <button id="btn-attack" onclick="launchAttack()">
+            <img src="https://game-icons.net/icons/c8c8c8/1a0e00/1x1/lorc/crossed-swords.svg" alt=""
+                 onerror="this.style.display='none'">
+            Launch Attack!
+          </button>
+
+          <!-- Strategy -->
+          <h3>Battle Strategy</h3>
+          <p style="font-size:11px;color:var(--text-dim);margin-bottom:6px">
+            Choose your formation before battle.
+          </p>
+          <div id="combat-strategy" class="strategy-group">
+            <label class="strategy-label">
+              <input type="radio" class="strategy-radio" name="strategy" value="aggressive">
+              ⚔️ Aggressive
+              <span style="font-size:10px;color:var(--text-dim);display:block">+30% dmg / +30% losses</span>
+            </label>
+            <label class="strategy-label">
+              <input type="radio" class="strategy-radio" name="strategy" value="balanced" checked>
+              ⚖️ Balanced
+              <span style="font-size:10px;color:var(--text-dim);display:block">Standard</span>
+            </label>
+            <label class="strategy-label">
+              <input type="radio" class="strategy-radio" name="strategy" value="defensive">
+              🛡️ Defensive
+              <span style="font-size:10px;color:var(--text-dim);display:block">-20% dmg / -50% losses</span>
+            </label>
+          </div>
+
+          <!-- Combat Stats -->
+          <h3>Battle Record</h3>
+          <div id="combat-stats">
+            <!-- Populated by renderCombat() -->
+          </div>
+
+          <!-- Raid info -->
+          <p style="font-size:11px;color:var(--text-dim);margin-top:10px">
+            ⚠️ Enemy raids occur periodically — build walls and towers to defend!
+          </p>
+        </div>
+
+        <!-- UPGRADES TAB -->
+        <div class="tab-pane" id="tab-upgrades">
+          <h2>
+            <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/upgrade.svg" alt=""
+                 onerror="this.style.display='none'">
+            Research &amp; Upgrades
+          </h2>
+
+          <div class="upgrade-tree">
+            <h3>📊 Economy</h3>
+            <div id="upgrades-economy"></div>
+          </div>
+
+          <div class="upgrade-tree">
+            <h3>⚔️ Military</h3>
+            <div id="upgrades-military"></div>
+          </div>
+
+          <div class="upgrade-tree">
+            <h3>🛡️ Defense</h3>
+            <div id="upgrades-defense"></div>
+          </div>
+        </div>
+
+        <!-- PRESTIGE TAB -->
+        <div class="tab-pane" id="tab-prestige">
+          <h2>
+            <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/imperial-crown.svg" alt=""
+                 onerror="this.style.display='none'">
+            Crown &amp; Legacy
+          </h2>
+
+          <div class="prestige-info-box" id="prestige-info">
+            <!-- Populated by renderPrestige() -->
+          </div>
+
+          <h3>Spend Crown Points</h3>
+          <div class="prestige-actions">
+            <div class="prestige-action-card">
+              <div>
+                <div style="font-family:var(--font-title);font-size:13px;color:var(--text-bright)">
+                  Production Boost
+                </div>
+                <div style="font-size:11px;color:var(--text-dim)">+10% all resource production</div>
+              </div>
+              <button id="btn-prestige-prod" onclick="spendPrestigePoint('prod')">
+                Spend 1 Point
+              </button>
+            </div>
+            <div class="prestige-action-card">
+              <div>
+                <div style="font-family:var(--font-title);font-size:13px;color:var(--text-bright)">
+                  Click Mastery
+                </div>
+                <div style="font-size:11px;color:var(--text-dim)">+5% click power</div>
+              </div>
+              <button id="btn-prestige-click" onclick="spendPrestigePoint('click')">
+                Spend 1 Point
+              </button>
+            </div>
+          </div>
+
+          <button class="btn-prestige-reset" onclick="resetGame()">
+            👑 Prestige Reset
+          </button>
+          <p class="prestige-note">
+            Reset your kingdom and earn Crown Points based on total gold earned.
+            <br>Points persist and grant permanent bonuses.
+          </p>
+        </div>
+
+      </div><!-- /tab-content -->
+    </div><!-- /center-panel -->
+
+
+    <!-- -------------------------------------------------------
+         RIGHT PANEL – Battle Log + Events
+         ------------------------------------------------------- -->
+    <div id="right-panel">
+      <h3>Chronicle</h3>
+      <div id="battle-log">
+        <!-- Populated by renderLog() -->
+      </div>
+      <div id="event-area">
+        <div id="event-box">
+          <!-- Populated by renderEventBox() -->
+        </div>
+      </div>
+    </div><!-- /right-panel -->
+
+  </div><!-- /main-area -->
+</div><!-- /game-wrapper -->
+
+<!-- Notifications -->
+<div id="notifications"></div>
+
+<script src="game.js"></script>
+
+<script>
+  // Enhance kingdom visual: show building icons based on what's built
+  const _origRenderKingdom = renderKingdom;
+  renderKingdom = function() {
+    _origRenderKingdom();
+    updateKingdomVisual();
+  };
+
+  function updateKingdomVisual() {
+    const age = getCurrentAge();
+    const kv = document.getElementById('kv-buildings');
+    if (!kv) return;
+
+    const ageEl = document.getElementById('current-age-badge');
+    if (ageEl) ageEl.textContent = AGE_NAMES[age];
+
+    // Collect buildings to show
+    const items = [];
+    const b = S.buildings;
+
+    if (b.farms      > 0) items.push({ src: ICONS.farm,     label: 'Farm' });
+    if (b.lumbermills> 0) items.push({ src: ICONS.lumbermill,label: 'Mill' });
+    if (b.quarries   > 0) items.push({ src: ICONS.quarry,   label: 'Quarry' });
+    if (b.markets    > 0) items.push({ src: ICONS.market,   label: 'Market' });
+    if (b.barracks   > 0) items.push({ src: ICONS.barracks, label: 'Barracks' });
+    if (b.stables    > 0) items.push({ src: ICONS.stable,   label: 'Stable' });
+    if (b.archerranges > 0) items.push({ src: ICONS.archery, label: 'Range' });
+    if (b.walls      > 0) items.push({ src: ICONS.walls,    label: 'Walls' });
+    if (b.towers     > 0) items.push({ src: ICONS.tower,    label: 'Tower' });
+    if (b.castles    > 0) items.push({ src: ICONS.castle,   label: 'Castle' });
+
+    kv.innerHTML = items.map(it => `
+      <div class="kv-building visible">
+        <img src="${it.src}" alt="${it.label}" title="${it.label}"
+             onerror="this.style.display='none'" width="28" height="28">
+      </div>
+    `).join('');
+  }
+</script>
+
+</body>
+</html>
