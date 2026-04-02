@@ -22,7 +22,21 @@ function renderMap() {
       el.style.left = pos.l + '%';
       el.style.top  = pos.t + '%';
       el.title = BUILDING_DEFS[btype] ? BUILDING_DEFS[btype].name : btype;
-      el.innerHTML = '<img src="' + ICONS[mapDef.icon] + '" alt="" width="26" height="26" onerror="this.style.display=\'none\'">';
+
+      // Scale icon based on how many of this building exist
+      var sz = count >= 8 ? 38 : count >= 4 ? 32 : 26;
+      var szH = Math.round(sz * 0.775);
+      if (BUILDING_SVGS[btype]) {
+        el.innerHTML = '<div style="width:' + sz + 'px;height:' + szH + 'px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.9))">' + BUILDING_SVGS[btype] + '</div>';
+      } else {
+        el.innerHTML = '<img src="' + ICONS[mapDef.icon] + '" alt="" width="' + sz + '" height="' + sz + '" onerror="this.style.display=\'none\'">';
+      }
+      if (count > 1) {
+        var badge = document.createElement('div');
+        badge.className = 'map-building-count';
+        badge.textContent = count;
+        el.appendChild(badge);
+      }
       container.appendChild(el);
     }
   }

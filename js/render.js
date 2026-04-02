@@ -55,7 +55,7 @@ function renderAll() {
   renderBuildings();
   renderArmy();
   renderCombat();
-  renderUpgrades();
+  renderTalents();
   renderPrestige();
   renderLog();
   renderEventBox();
@@ -128,9 +128,12 @@ function renderWorkers() {
     var count    = S.workers[type] || 0;
     var cost     = workerCost(type);
     var afford   = S.resources.gold >= cost;
+    var wIconHtml = WORKER_SVGS[type]
+      ? '<div class="card-icon bsvg">' + WORKER_SVGS[type] + '</div>'
+      : '<img class="card-icon" src="' + ICONS[def.icon] + '" alt="' + def.name + '" onerror="this.style.display=\'none\'">';
     html +=
       '<div class="worker-card">' +
-      '<img class="card-icon" src="' + ICONS[def.icon] + '" alt="' + def.name + '" onerror="this.style.display=\'none\'">' +
+      wIconHtml +
       '<div class="card-info">' +
         '<div class="card-name">' + def.name + ' <span class="card-count">' + count + '</span></div>' +
         '<div class="card-desc">' + def.desc + '</div>' +
@@ -219,9 +222,12 @@ function renderArmy() {
     var canTrain = unlocked && afford && !atCap;
     var btnClass = 'btn-train' + (canTrain ? '' : ' disabled');
 
+    var uIconHtml = UNIT_SVGS[type]
+      ? '<div class="card-icon bsvg">' + UNIT_SVGS[type] + '</div>'
+      : '<img class="card-icon" src="' + ICONS[def.icon] + '" alt="' + def.name + '" onerror="this.style.display=\'none\'">';
     html +=
       '<div class="unit-card' + (unlocked ? '' : ' locked') + '">' +
-      '<img class="card-icon" src="' + ICONS[def.icon] + '" alt="' + def.name + '" onerror="this.style.display=\'none\'">' +
+      uIconHtml +
       '<div class="card-info">' +
         '<div class="card-name">' + def.name + ' <span class="card-count">' + count + '</span></div>' +
         '<div class="card-desc">ATK ' + def.attack + ' | ' + def.upkeep + ' food/s upkeep</div>' +
@@ -250,32 +256,82 @@ function renderCombat() {
 }
 
 // ----------------------------------------------------------------
-// UPGRADES
+// TALENTS
 // ----------------------------------------------------------------
-function renderUpgrades() {
-  ['economy','military','defense'].forEach(function(tree) {
-    var container = document.getElementById('upgrades-' + tree);
-    if (!container) return;
+function renderTalents() {
+  var overlay = document.getElementById('talent-overlay');
+  var trees = ['economy', 'military', 'defense'];
+
+  var available = getTalentPoints() - getSpentTalentPoints();
+  var ptEl = document.getElementById('talent-pts');
+  if (ptEl) ptEl.textContent = available + ' / ' + getTalentPoints();
+  var ptEl2 = document.getElementById('talent-pts-modal');
+  if (ptEl2) ptEl2.textContent = available + ' / ' + getTalentPoints();
+
+  if (!overlay) return;
+
+  trees.forEach(function(tree) {
+    var wrap = document.getElementById('talent-tree-' + tree);
+    if (!wrap) return;
+
+    // Build a 4-row × 3-col grid of talent nodes
+    // tier = row (0 top), col = column position
+    var grid = [[null,null,null],[null,null,null],[null,null,null],[null,null,null]];
+    TALENT_DEFS.filter(function(d){ return d.tree === tree; }).forEach(function(d){
+      grid[d.tier][d.col] = d;
+    });
 
     var html = '';
-    UPGRADE_DEFS.filter(function(u){ return u.tree === tree; }).forEach(function(def) {
-      var purchased = isUpgradePurchased(def.id);
-      var afford    = canAffordUpgrade(def);
-      var costStr   = Object.entries(def.cost).map(function(e){ return fmt(e[1]) + ' ' + e[0]; }).join(', ');
-      html +=
-        '<div class="upgrade-card' + (purchased ? ' purchased' : '') + '">' +
-        '<img class="card-icon small" src="' + ICONS[def.icon] + '" alt="" onerror="this.style.display=\'none\'">' +
-        '<div class="card-info">' +
-          '<div class="card-name">' + def.name + '</div>' +
-          '<div class="card-desc">' + def.desc + '</div>' +
-          '<div class="card-cost">' + (purchased ? '✓ Researched' : costStr) + '</div>' +
-        '</div>' +
-        (purchased ? '' : '<button class="btn-research' + (afford ? '' : ' disabled') + '" onclick="buyUpgrade(\'' + def.id + '\')">Research</button>') +
-        '</div>';
-    });
-    if (container.innerHTML !== html) container.innerHTML = html;
+    for (var tier = 0; tier <= 3; tier++) {
+      html += '<div class="tt-row">';
+      for (var col = 0; col <= 2; col++) {
+        var def = grid[tier][col];
+        if (!def) {
+          html += '<div class="tt-node tt-empty"></div>';
+          continue;
+        }
+        var learned  = isTalentLearned(def.id);
+        var canLearn = canLearnTalent(def.id);
+        var blocked  = def.exclusive.some(function(eid){ return isTalentLearned(eid); });
+        var prereqMet = countTreeTalents(tree) >= def.tier;
+        var costStr  = Object.entries(def.cost).map(function(e){ return fmt(e[1]) + ' ' + e[0]; }).join(', ');
+
+        var cls = 'tt-node';
+        if (learned)        cls += ' tt-learned';
+        else if (blocked)   cls += ' tt-blocked';
+        else if (!prereqMet)cls += ' tt-locked';
+        else if (canLearn)  cls += ' tt-available';
+        else                cls += ' tt-noafford';
+
+        html +=
+          '<div class="' + cls + '" title="' + def.desc + (blocked? ' [Blocked by exclusive choice]':'') + '"' +
+          ' onclick="learnTalent(\'' + def.id + '\')">' +
+          '<div class="tt-icon">' + def.svg + '</div>' +
+          '<div class="tt-name">' + def.name + '</div>' +
+          (learned
+            ? '<div class="tt-cost tt-done">✓ Learned</div>'
+            : '<div class="tt-cost">' + (blocked ? '🔒 Excl.' : !prereqMet ? '🔒 Tier ' + def.tier : costStr) + '</div>') +
+          '</div>';
+      }
+      html += '</div>';
+      // Connector line between tiers (except after last)
+      if (tier < 3) html += '<div class="tt-connector"></div>';
+    }
+    if (wrap.innerHTML !== html) wrap.innerHTML = html;
   });
 }
+
+function toggleTalentOverlay() {
+  var overlay = document.getElementById('talent-overlay');
+  if (!overlay) return;
+  var isOpen = overlay.classList.toggle('open');
+  if (isOpen) renderTalents();
+}
+
+// ----------------------------------------------------------------
+// UPGRADES (stub kept so renderAll doesn't break in old saves)
+// ----------------------------------------------------------------
+function renderUpgrades() { renderTalents(); }
 
 // ----------------------------------------------------------------
 // PRESTIGE
@@ -320,9 +376,14 @@ function renderEventBox() {
   for (var i = 0; i < EVENTS.length; i++) if (EVENTS[i].id === S.events.active) { evDef = EVENTS[i]; break; }
   var remaining = Math.max(0, Math.ceil((S.events.activeEnd - Date.now()) / 1000));
 
+  var evIconKey = evDef ? evDef.icon : 'event';
+  var evIconHtml = MISC_SVGS[evIconKey]
+    ? '<div class="event-icon isvg">' + MISC_SVGS[evIconKey] + '</div>'
+    : '<img class="event-icon" src="' + ICONS[evIconKey] + '" alt="" onerror="this.style.display=\'none\'">';
+
   el.style.display = 'flex';
   el.innerHTML =
-    '<img class="event-icon" src="' + ICONS[evDef ? evDef.icon : 'event'] + '" alt="" onerror="this.style.display=\'none\'">' +
+    evIconHtml +
     '<div>' +
       '<b>' + (evDef ? evDef.name : 'Event') + '</b>' +
       (evDef && evDef.duration > 0 ? ' <span class="event-timer">(' + remaining + 's)</span>' : '') +

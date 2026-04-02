@@ -12,7 +12,8 @@ function defaultState() {
     buildings: { farms:0, lumbermills:0, quarries:0, markets:0, barracks:0,
                  stables:0, archerranges:0, siegeworkshops:0, walls:0, towers:0, castles:0 },
     army:      { spearmen:0, archers:0, knights:0, siege:0 },
-    upgrades:  [],
+    talentPoints: 3,
+    talents:   {},
 
     prestige: { level: 0, points: 0, spent: 0, bonuses: { prodMult: 1, clickMult: 1 } },
     hero:     { unlocked: false, xp: 0, level: 1, active: false },
@@ -31,7 +32,7 @@ function defaultState() {
     },
     log: [],
 
-    // Derived multipliers – recalculated by reapplyUpgrades()
+    // Derived multipliers – recalculated by reapplyTalents()
     clickMult:     1,
     clickBonus:    0,
     workerMult:    1,
@@ -40,6 +41,14 @@ function defaultState() {
     raidDefense:   0,
     towerBonus:    0,
     armyCap:       100,
+    foodMult:      1,
+    woodMult:      1,
+    stoneMult:     1,
+    goldMult:      1,
+    storageMult:   1,
+    knightMult:    1,
+    siegeMult:     1,
+    battleLootMult:1,
 
     // Internal accumulator (not saved)
     _towerDmgAccum: 0,
@@ -103,9 +112,11 @@ function resetGame() {
   ns.prestige.points = S.prestige.level + pts;
   ns.prestige.bonuses.prodMult  = 1 + ns.prestige.level * 0.10;
   ns.prestige.bonuses.clickMult = 1 + ns.prestige.level * 0.05;
+  // Bonus starting talent points from prestige level
+  ns.talentPoints = 3 + Math.min(ns.prestige.level, 6);
 
   S = ns;
-  reapplyUpgrades();
+  reapplyTalents();
   renderAll();
   renderMap();
   if (pts > 0) addNotification('Prestige! +' + pts + ' Crown Points earned!');

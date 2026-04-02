@@ -329,6 +329,18 @@ body {
 @keyframes mapfadein { from{opacity:0;transform:translate(-50%,-60%)} to{opacity:1;transform:translate(-50%,-50%)} }
 .map-building img { display:block; filter:drop-shadow(0 2px 5px rgba(0,0,0,.9)); transition:transform .15s; }
 .map-building:hover img { transform:scale(1.25); }
+.map-building div:first-child { transition:transform .15s; }
+.map-building:hover div:first-child { transform:scale(1.25); }
+
+/* Count badge on map buildings */
+.map-building-count {
+  position:absolute; bottom:-5px; right:-5px;
+  background:var(--bg0); border:1px solid var(--border-gld);
+  color:var(--gold); font-family:var(--font-t); font-size:9px;
+  border-radius:3px; padding:0 3px; line-height:14px;
+  min-width:14px; text-align:center;
+  pointer-events:none;
+}
 
 #map-age-badge {
   position:absolute; top:6px; left:8px;
@@ -654,3 +666,155 @@ body {
 }
 .btn-mp-attack:hover { background:#280808; border-color:var(--red-hi); }
 .mp-empty { font-size:12px; color:var(--text-dim); text-align:center; padding:12px 0; font-style:italic; }
+
+/* ---------------------------------------------------------------
+   TALENT TREE – open button
+   --------------------------------------------------------------- */
+.btn-talent-open {
+  display: block; width: calc(100% - 14px); margin: 6px 7px 8px;
+  background: linear-gradient(180deg,#1e2a18 0%,#141e10 100%);
+  border: 1px solid var(--border-gld); border-radius: 7px;
+  color: var(--gold); font-family: var(--font-t); font-size: 12px;
+  padding: 10px 8px; cursor: pointer; text-align: center;
+  letter-spacing: .4px; transition: all .2s;
+}
+.btn-talent-open:hover {
+  background: linear-gradient(180deg,#283820 0%,#1c2a18 100%);
+  border-color: var(--gold); box-shadow: 0 0 14px rgba(232,192,64,.25);
+}
+
+/* ---------------------------------------------------------------
+   TALENT TREE – full-screen overlay
+   --------------------------------------------------------------- */
+#talent-overlay {
+  display: none; position: fixed; inset: 0; z-index: 800;
+  background: rgba(5,8,14,.92); backdrop-filter: blur(3px);
+  align-items: center; justify-content: center;
+}
+#talent-overlay.open { display: flex; }
+
+#talent-panel {
+  width: min(98vw, 1060px); max-height: 90vh;
+  background: linear-gradient(180deg,#14202e 0%,#101828 100%);
+  border: 2px solid var(--border-hi); border-radius: 12px;
+  box-shadow: 0 0 60px rgba(0,0,0,.9), 0 0 30px rgba(50,90,80,.2);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+.tt-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px 10px;
+  background: linear-gradient(90deg,#0d1a28 0%,#131e2c 100%);
+  border-bottom: 2px solid var(--border-hi); flex-shrink: 0;
+}
+.tt-header-title {
+  font-family: var(--font-t); font-size: 16px; color: var(--gold-light);
+  letter-spacing: 1.5px; flex: 1;
+}
+.tt-header-pts {
+  font-family: var(--font-t); font-size: 13px; color: var(--text-dim);
+}
+.tt-header-pts b { color: var(--gold); }
+.tt-close {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text-dim); font-family: var(--font-t); font-size: 12px;
+  padding: 6px 12px; cursor: pointer; transition: all .15s;
+}
+.tt-close:hover { border-color: var(--red); color: var(--red-hi); }
+
+.tt-body {
+  display: flex; gap: 0; flex: 1; overflow-y: auto; min-height: 0;
+}
+
+.tt-tree-col {
+  flex: 1; border-right: 1px solid var(--border);
+  padding: 14px 12px 18px; display: flex; flex-direction: column; gap: 8px;
+}
+.tt-tree-col:last-child { border-right: none; }
+
+.tt-tree-title {
+  font-family: var(--font-t); font-size: 13px; text-align: center;
+  letter-spacing: 1.5px; padding: 5px 0 10px;
+  border-bottom: 2px solid;
+}
+.tt-title-eco { color: #e8c040; border-color: #8a6020; }
+.tt-title-mil { color: #e85040; border-color: #802010; }
+.tt-title-def { color: #50b888; border-color: #2a6e50; }
+
+/* Each row in the tree */
+.tt-row {
+  display: flex; gap: 8px; justify-content: center; align-items: stretch;
+}
+
+/* Connector between rows */
+.tt-connector {
+  height: 20px; width: 2px; background: var(--border);
+  margin: 0 auto;
+}
+
+/* Individual talent node */
+.tt-node {
+  flex: 1; max-width: 100px; min-height: 90px;
+  border-radius: 8px; border: 2px solid var(--border);
+  background: linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 100%);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 8px 5px 6px; transition: all .18s;
+  cursor: pointer; text-align: center;
+}
+.tt-node.tt-empty {
+  border-color: transparent; background: transparent; cursor: default;
+}
+.tt-node:not(.tt-empty):not(.tt-learned):not(.tt-locked):not(.tt-blocked):hover {
+  transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.6);
+}
+
+/* States */
+.tt-node.tt-learned {
+  border-color: var(--teal); background: linear-gradient(180deg,rgba(80,184,136,.18) 0%,rgba(42,110,80,.10) 100%);
+  box-shadow: 0 0 12px rgba(80,184,136,.25);
+}
+.tt-node.tt-available {
+  border-color: var(--gold); background: linear-gradient(180deg,rgba(232,192,64,.14) 0%,var(--bg2) 100%);
+  box-shadow: 0 0 10px rgba(232,192,64,.18);
+}
+.tt-node.tt-available:hover {
+  box-shadow: 0 0 18px rgba(232,192,64,.35); border-color: var(--gold-light);
+}
+.tt-node.tt-noafford {
+  border-color: #5a4020; opacity: .75;
+}
+.tt-node.tt-locked, .tt-node.tt-blocked {
+  opacity: .35; cursor: not-allowed;
+}
+
+/* Icon inside node */
+.tt-icon {
+  width: 40px; height: 40px; flex-shrink: 0;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,.8));
+}
+.tt-icon svg { width: 100%; height: 100%; display: block; }
+.tt-node.tt-learned .tt-icon { filter: drop-shadow(0 0 6px rgba(80,184,136,.6)); }
+.tt-node.tt-available .tt-icon { filter: drop-shadow(0 0 8px rgba(232,192,64,.5)); }
+
+.tt-name {
+  font-family: var(--font-t); font-size: 10px; color: var(--parchment);
+  line-height: 1.2; letter-spacing: .2px;
+}
+.tt-cost {
+  font-size: 9px; color: var(--stone); line-height: 1.2;
+}
+.tt-done { color: var(--teal); }
+
+/* Legend */
+.tt-legend {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  padding: 8px 18px 10px;
+  background: linear-gradient(180deg,var(--bg2) 0%,#0d1420 100%);
+  border-top: 1px solid var(--border); flex-shrink: 0;
+  justify-content: center;
+}
+.tt-leg { font-family: var(--font-t); font-size: 10px; color: var(--text-dim); }
+.tt-learned-leg { color: var(--teal); }
+.tt-available-leg { color: var(--gold); }
+.tt-noafford-leg { color: #a07030; }
+.tt-locked-leg, .tt-blocked-leg { color: var(--stone-dim); }

@@ -5,28 +5,8 @@
 // ================================================================
 
 // ----------------------------------------------------------------
-// UPGRADE DEFINITIONS (here because effect fns reference engine globals)
+// UPGRADE_DEFS removed — talent system now lives in TALENT_DEFS (config.js)
 // ----------------------------------------------------------------
-var UPGRADE_DEFS = [
-  // Economy
-  { id:'eco1', name:'Better Tools',      tree:'economy',  cost:{gold:100},                  icon:'upgrade', desc:'+50% click value',          effect:function(s){ s.clickMult  *= 1.5; } },
-  { id:'eco2', name:'Tax Reform',        tree:'economy',  cost:{gold:250},                  icon:'upgrade', desc:'+1 gold per click',         effect:function(s){ s.clickBonus += 1;   } },
-  { id:'eco3', name:'Trade Routes',      tree:'economy',  cost:{gold:500,wood:100},         icon:'market',  desc:'+25% worker output',        effect:function(s){ s.workerMult *= 1.25;} },
-  { id:'eco4', name:'Guild System',      tree:'economy',  cost:{gold:1000,stone:200},       icon:'market',  desc:'+50% worker output',        effect:function(s){ s.workerMult *= 1.5; } },
-  { id:'eco5', name:'Imperial Economy', tree:'economy',  cost:{gold:5000,wood:500,stone:500},icon:'crown', desc:'×2 all resource production', effect:function(s){ s.workerMult *= 2;   } },
-  // Military
-  { id:'mil1', name:'Iron Weapons',      tree:'military', cost:{gold:200,wood:50},          icon:'sword',   desc:'+25% unit attack',          effect:function(s){ s.attackMult    *= 1.25;} },
-  { id:'mil2', name:'Heavy Armor',       tree:'military', cost:{gold:300,stone:80},         icon:'shield',  desc:'-20% battle losses',        effect:function(s){ s.lossReduction += 0.2; } },
-  { id:'mil3', name:'Tactics Manual',    tree:'military', cost:{gold:600,wood:100},         icon:'sword',   desc:'+50% unit attack',          effect:function(s){ s.attackMult    *= 1.5; } },
-  { id:'mil4', name:'War Drums',         tree:'military', cost:{gold:800,food:200},         icon:'sword',   desc:'+25 army capacity',         effect:function(s){ s.armyCap       += 50;  } },
-  { id:'mil5', name:'Imperial Legion',   tree:'military', cost:{gold:3000,stone:300},       icon:'knight',  desc:'×2 attack, -30% losses',    effect:function(s){ s.attackMult *= 2; s.lossReduction += 0.3; } },
-  // Defense
-  { id:'def1', name:'Reinforced Gates',  tree:'defense',  cost:{wood:150,stone:100},        icon:'walls',   desc:'-15% raid losses',          effect:function(s){ s.raidDefense += 0.15;} },
-  { id:'def2', name:'Garrison Training', tree:'defense',  cost:{gold:400,food:100},         icon:'shield',  desc:'+2 tower auto-damage',      effect:function(s){ s.towerBonus  += 2;   } },
-  { id:'def3', name:'Moat Construction', tree:'defense',  cost:{wood:200,stone:200},        icon:'walls',   desc:'-25% raid losses',          effect:function(s){ s.raidDefense += 0.25;} },
-  { id:'def4', name:'Ballista Towers',   tree:'defense',  cost:{gold:1500,wood:300},        icon:'tower',   desc:'+5 tower auto-damage',      effect:function(s){ s.towerBonus  += 5;   } },
-  { id:'def5', name:'Impenetrable Walls',tree:'defense',  cost:{gold:2000,stone:500},       icon:'castle',  desc:'-40% all battle losses',    effect:function(s){ s.raidDefense += 0.4; s.lossReduction += 0.1; } },
-];
 
 // ----------------------------------------------------------------
 // RANDOM EVENTS
@@ -80,18 +60,18 @@ function _applyBanditRaid(s) {
 // PRODUCTION RATES
 // ----------------------------------------------------------------
 function calcRates() {
+  var castleBonus = S.buildings.castles > 0 ? 1.5 : 1.0;
   var pBonus = (S.prestige.bonuses.prodMult || 1);
   var wm = S.workerMult * pBonus;
-  var castleBonus = S.buildings.castles > 0 ? 1.5 : 1.0;
 
   var farmRate  = (S.workers.farmers      * WORKER_DEFS.farmers.rate
-                 + S.buildings.farms      * 5) * wm * (S.events.foodBoost || 1) * castleBonus;
+                 + S.buildings.farms      * 5) * wm * (S.foodMult || 1) * (S.events.foodBoost || 1) * castleBonus;
   var woodRate  = (S.workers.woodcutters  * WORKER_DEFS.woodcutters.rate
-                 + S.buildings.lumbermills* 3) * wm * castleBonus;
+                 + S.buildings.lumbermills* 3) * wm * (S.woodMult || 1)  * castleBonus;
   var stoneRate = (S.workers.miners       * WORKER_DEFS.miners.rate
-                 + S.buildings.quarries   * 2) * wm * castleBonus;
+                 + S.buildings.quarries   * 2) * wm * (S.stoneMult || 1) * castleBonus;
   var goldRate  = (S.workers.taxcollectors * WORKER_DEFS.taxcollectors.rate)
-               * (1 + S.buildings.markets * 0.2) * wm * (S.events.goldBoost || 1) * castleBonus;
+               * (1 + S.buildings.markets * 0.2) * wm * (S.goldMult || 1) * (S.events.goldBoost || 1) * castleBonus;
 
   var towerDmg  = S.buildings.towers * (5 + S.towerBonus);
 
@@ -101,7 +81,7 @@ function calcRates() {
 function getMaxResource(res) {
   var base  = { gold: 2000, food: 1000, wood: 1000, stone: 1000 };
   var extra = S.buildings.castles > 0 ? 5 : 1;
-  return base[res] * extra * (1 + S.prestige.level * 0.1);
+  return base[res] * extra * (1 + S.prestige.level * 0.1) * (S.storageMult || 1);
 }
 
 // ----------------------------------------------------------------
@@ -221,7 +201,12 @@ function _triggerEnemyRaid() {
 // ----------------------------------------------------------------
 function calcArmyPower() {
   var power = 0;
-  for (var t in S.army) power += S.army[t] * (UNIT_DEFS[t] ? UNIT_DEFS[t].attack : 0) * S.attackMult;
+  for (var t in S.army) {
+    var atk = UNIT_DEFS[t] ? UNIT_DEFS[t].attack : 0;
+    if (t === 'knights') atk *= (S.knightMult || 1);
+    if (t === 'siege')   atk *= (S.siegeMult  || 1);
+    power += S.army[t] * atk * S.attackMult;
+  }
   return power * (S.events.heroBoost || 1);
 }
 
@@ -238,7 +223,7 @@ function launchAttack() {
   var mod = mods[S.combat.strategy] || mods.balanced;
   var playerPower = calcArmyPower() * mod.dmg;
   var enemyPower  = rand(age * 40, age * 120) + S.combat.wins * 8;
-  var loot = Math.floor(enemyPower * rand(0.8, 1.5));
+var loot = Math.floor(enemyPower * rand(0.8, 1.5) * (S.battleLootMult || 1));
 
   S.stats.totalBattles++;
 
@@ -435,47 +420,98 @@ function trainUnit(type) {
 }
 
 // ----------------------------------------------------------------
-// UPGRADES
+// TALENTS
 // ----------------------------------------------------------------
-function reapplyUpgrades() {
+function reapplyTalents() {
+  // Reset all derived multipliers
   S.clickMult = 1; S.clickBonus = 0; S.workerMult = 1;
   S.attackMult = 1; S.lossReduction = 0; S.raidDefense = 0;
   S.towerBonus = 0; S.armyCap = 100;
+  S.foodMult = 1; S.woodMult = 1; S.stoneMult = 1; S.goldMult = 1;
+  S.storageMult = 1; S.knightMult = 1; S.siegeMult = 1; S.battleLootMult = 1;
 
-  for (var i = 0; i < S.upgrades.length; i++) {
-    var def = _findUpgrade(S.upgrades[i]);
-    if (def) def.effect(S);
+  for (var i = 0; i < TALENT_DEFS.length; i++) {
+    if (S.talents[TALENT_DEFS[i].id]) {
+      TALENT_DEFS[i].effect(S);
+    }
   }
   // Apply prestige bonuses on top
   S.workerMult *= (S.prestige.bonuses.prodMult || 1);
   S.clickMult  *= (S.prestige.bonuses.clickMult || 1);
 }
 
-function _findUpgrade(id) {
-  for (var i = 0; i < UPGRADE_DEFS.length; i++) if (UPGRADE_DEFS[i].id === id) return UPGRADE_DEFS[i];
+function _findTalent(id) {
+  for (var i = 0; i < TALENT_DEFS.length; i++) if (TALENT_DEFS[i].id === id) return TALENT_DEFS[i];
   return null;
 }
 
-function isUpgradePurchased(id) { return S.upgrades.indexOf(id) >= 0; }
+function isTalentLearned(id) { return !!S.talents[id]; }
 
-function canAffordUpgrade(def) {
-  for (var res in def.cost) if ((S.resources[res] || 0) < def.cost[res]) return false;
+function countTreeTalents(tree) {
+  var n = 0;
+  for (var i = 0; i < TALENT_DEFS.length; i++) {
+    if (TALENT_DEFS[i].tree === tree && S.talents[TALENT_DEFS[i].id]) n++;
+  }
+  return n;
+}
+
+function getTalentPoints() { return S.talentPoints || 0; }
+function getSpentTalentPoints() {
+  var n = 0;
+  for (var id in S.talents) if (S.talents[id]) n++;
+  return n;
+}
+
+function canLearnTalent(id) {
+  var def = _findTalent(id);
+  if (!def) return false;
+  if (isTalentLearned(id)) return false;
+  // Need a free talent point
+  if (getTalentPoints() <= getSpentTalentPoints()) return false;
+  // Tier 0 always available; tier N requires N talents already spent in that tree
+  var spent = countTreeTalents(def.tree);
+  if (spent < def.tier) return false;
+  // Exclusive group: none from the same exclusive[] already learned
+  for (var i = 0; i < def.exclusive.length; i++) {
+    if (isTalentLearned(def.exclusive[i])) return false;
+  }
+  // Can afford resource cost
+  for (var res in def.cost) {
+    if ((S.resources[res] || 0) < def.cost[res]) return false;
+  }
   return true;
 }
 
-function buyUpgrade(id) {
-  if (isUpgradePurchased(id)) return;
-  var def = _findUpgrade(id);
-  if (!def) return;
-  if (!canAffordUpgrade(def)) { addLog('Not enough resources for ' + def.name + '!'); return; }
+function learnTalent(id) {
+  if (!canLearnTalent(id)) {
+    var def = _findTalent(id);
+    if (!def) return;
+    if (getTalentPoints() <= getSpentTalentPoints()) {
+      addLog('No talent points available!');
+    } else if (countTreeTalents(def.tree) < def.tier) {
+      addLog('Unlock ' + def.tier + ' ' + def.tree + ' talents first!');
+    } else {
+      addLog('Not enough resources for ' + def.name + '!');
+    }
+    return;
+  }
+  var def = _findTalent(id);
   for (var res in def.cost) S.resources[res] -= def.cost[res];
-  S.upgrades.push(id);
+  S.talents[id] = true;
   def.effect(S);
-  addLog('✨ Researched: ' + def.name + '!');
-  addNotification('Research complete: ' + def.name);
-  renderUpgrades();
+  addLog('✨ Learned: ' + def.name + '!');
+  addNotification('Talent learned: ' + def.name);
+  renderTalents();
   renderResources();
 }
+
+// ----------------------------------------------------------------
+// UPGRADES (stub kept for save compatibility; talent system takes over)
+// ----------------------------------------------------------------
+function reapplyUpgrades() { reapplyTalents(); }
+function isUpgradePurchased(id) { return false; }
+function canAffordUpgrade(def) { return false; }
+function buyUpgrade(id) { learnTalent(id); }
 
 // ----------------------------------------------------------------
 // PRESTIGE SPENDING

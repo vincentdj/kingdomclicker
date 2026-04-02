@@ -15,14 +15,13 @@
        ══════════════════════════════════════════════════════════ -->
   <header id="header">
     <div id="game-title">
-      <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/imperial-crown.svg" alt=""
-           onerror="this.style.display='none'">
+      <span class="res-icon isvg" id="icon-crown"></span>
       Kingdom Clicker
     </div>
 
     <div id="resources-bar">
       <div class="res-chip">
-        <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/two-coins.svg" alt="Gold" onerror="this.style.display='none'">
+        <span class="res-icon isvg" id="icon-gold"></span>
         <div class="res-data">
           <span class="res-label">Gold</span>
           <span class="res-value" id="res-gold">0</span>
@@ -30,7 +29,7 @@
         </div>
       </div>
       <div class="res-chip">
-        <img src="https://game-icons.net/icons/90c050/1a0e00/1x1/delapouite/wheat.svg" alt="Food" onerror="this.style.display='none'">
+        <span class="res-icon isvg" id="icon-food"></span>
         <div class="res-data">
           <span class="res-label">Food</span>
           <span class="res-value" id="res-food">0</span>
@@ -38,7 +37,7 @@
         </div>
       </div>
       <div class="res-chip">
-        <img src="https://game-icons.net/icons/c87941/1a0e00/1x1/lorc/wood-beam.svg" alt="Wood" onerror="this.style.display='none'">
+        <span class="res-icon isvg" id="icon-wood"></span>
         <div class="res-data">
           <span class="res-label">Wood</span>
           <span class="res-value" id="res-wood">0</span>
@@ -46,7 +45,7 @@
         </div>
       </div>
       <div class="res-chip">
-        <img src="https://game-icons.net/icons/b0a090/1a0e00/1x1/lorc/stone-block.svg" alt="Stone" onerror="this.style.display='none'">
+        <span class="res-icon isvg" id="icon-stone"></span>
         <div class="res-data">
           <span class="res-label">Stone</span>
           <span class="res-value" id="res-stone">0</span>
@@ -73,8 +72,7 @@
 
       <div id="click-section">
         <button id="btn-collect" onclick="clickKingdom(event)">
-          <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/two-coins.svg" alt=""
-               onerror="this.style.display='none'">
+          <span class="res-icon isvg btn-collect-icon" id="icon-collect"></span>
           <span>Collect Taxes</span>
           <span id="click-value" class="click-val">+1 gold</span>
         </button>
@@ -113,9 +111,7 @@
           <div class="map-road"></div>
 
           <!-- Town Center (always visible) -->
-          <div class="map-tc" title="Town Center">
-            <img src="https://game-icons.net/icons/c8a96e/1a0e00/1x1/delapouite/city.svg" alt=""
-                 onerror="this.style.display='none'">
+          <div class="map-tc" title="Town Center" id="map-tc">
           </div>
 
           <!-- Dynamic buildings injected by renderMap() -->
@@ -134,8 +130,7 @@
         <div class="ac-row">
           <div class="ac-header-block">
             <span class="ac-title">
-              <img src="https://game-icons.net/icons/c8a96e/1a0e00/1x1/delapouite/knight-helmet.svg"
-                   alt="" width="13" height="13" onerror="this.style.display='none'">
+              <span class="panel-isvg" id="icon-army"></span>
               Army
             </span>
             <span class="ac-stat">Units <b id="army-size">0/100</b></span>
@@ -143,8 +138,7 @@
           </div>
           <div class="ac-header-block">
             <span class="ac-title">
-              <img src="https://game-icons.net/icons/c8c8c8/1a0e00/1x1/lorc/crossed-swords.svg"
-                   alt="" width="13" height="13" onerror="this.style.display='none'">
+              <span class="panel-isvg" id="icon-combat"></span>
               Combat
             </span>
             <div id="combat-stats" class="combat-inline-stats"></div>
@@ -156,8 +150,7 @@
 
           <div id="combat-controls">
             <button id="btn-attack" onclick="launchAttack()">
-              <img src="https://game-icons.net/icons/c8c8c8/1a0e00/1x1/lorc/crossed-swords.svg"
-                   alt="" width="16" height="16" onerror="this.style.display='none'">
+              <span class="res-icon isvg btn-attack-icon" id="icon-attack"></span>
               Attack!
             </button>
             <div id="combat-strategy" class="strategy-group">
@@ -186,8 +179,7 @@
       <!-- Buildings -->
       <div class="panel-block">
         <div class="panel-block-title">
-          <img src="https://game-icons.net/icons/c8a96e/1a0e00/1x1/delapouite/castle.svg"
-               alt="" width="13" height="13" onerror="this.style.display='none'">
+          <span class="panel-isvg" id="icon-buildings"></span>
           Buildings
         </div>
         <div id="buildings-list" class="compact-list"></div>
@@ -195,19 +187,18 @@
 
       <div class="panel-divider"></div>
 
-      <!-- Research -->
+      <!-- Talent Tree Button -->
       <div class="panel-block">
         <div class="panel-block-title">
-          <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/upgrade.svg"
-               alt="" width="13" height="13" onerror="this.style.display='none'">
+          <span class="panel-isvg" id="icon-research"></span>
           Research
         </div>
-        <div class="upg-group-label">Economy</div>
-        <div id="upgrades-economy" class="upgrade-list"></div>
-        <div class="upg-group-label">Military</div>
-        <div id="upgrades-military" class="upgrade-list"></div>
-        <div class="upg-group-label">Defense</div>
-        <div id="upgrades-defense" class="upgrade-list"></div>
+        <div id="talent-pts-row" style="padding:5px 10px;font-size:12px;color:var(--text-dim);">
+          Talent Points: <b id="talent-pts" style="color:var(--gold)">3 / 3</b>
+        </div>
+        <button class="btn-talent-open" onclick="toggleTalentOverlay()">
+          Open Talent Tree ✦
+        </button>
       </div>
 
       <div class="panel-divider"></div>
@@ -215,8 +206,7 @@
       <!-- Prestige -->
       <div class="panel-block prestige-block">
         <div class="panel-block-title">
-          <img src="https://game-icons.net/icons/ffd700/1a0e00/1x1/delapouite/imperial-crown.svg"
-               alt="" width="13" height="13" onerror="this.style.display='none'">
+          <span class="panel-isvg" id="icon-prestige"></span>
           Crown &amp; Prestige
         </div>
         <div id="prestige-info"></div>
@@ -300,6 +290,48 @@
 
 <!-- Notification toasts -->
 <div id="notifications"></div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TALENT TREE OVERLAY (full-screen modal)
+     ══════════════════════════════════════════════════════════════ -->
+<div id="talent-overlay" onclick="if(event.target===this)toggleTalentOverlay()">
+  <div id="talent-panel">
+    <div class="tt-header">
+      <div class="tt-header-title">✦ Talent Tree</div>
+      <div class="tt-header-pts">Points: <b id="talent-pts-modal">3 / 3</b></div>
+      <button class="tt-close" onclick="toggleTalentOverlay()">✕ Close</button>
+    </div>
+    <div class="tt-body">
+
+      <!-- Economy tree -->
+      <div class="tt-tree-col">
+        <div class="tt-tree-title tt-title-eco">💰 Economy</div>
+        <div id="talent-tree-economy" class="tt-grid"></div>
+      </div>
+
+      <!-- Military tree -->
+      <div class="tt-tree-col">
+        <div class="tt-tree-title tt-title-mil">⚔ Military</div>
+        <div id="talent-tree-military" class="tt-grid"></div>
+      </div>
+
+      <!-- Defense tree -->
+      <div class="tt-tree-col">
+        <div class="tt-tree-title tt-title-def">🛡 Defense</div>
+        <div id="talent-tree-defense" class="tt-grid"></div>
+      </div>
+
+    </div>
+
+    <div class="tt-legend">
+      <span class="tt-leg tt-learned-leg">✓ Learned</span>
+      <span class="tt-leg tt-available-leg">Available</span>
+      <span class="tt-leg tt-noafford-leg">Can't afford</span>
+      <span class="tt-leg tt-locked-leg">🔒 Locked (tier)</span>
+      <span class="tt-leg tt-blocked-leg">🔒 Exclusive</span>
+    </div>
+  </div>
+</div>
 
 <!-- ============================================================
      SCRIPTS – load in dependency order
