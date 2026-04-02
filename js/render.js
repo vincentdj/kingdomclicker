@@ -117,21 +117,19 @@ function renderKingdom() {
 function renderWorkers() {
   var container = document.getElementById('workers-list');
   if (!container) return;
-  container.innerHTML = '';
 
   var totalWorkers = Object.values(S.workers).reduce(function(a,b){ return a+b; },0);
   var wc = document.getElementById('worker-count');
   if (wc) wc.textContent = totalWorkers + ' hired';
 
+  var html = '';
   for (var type in WORKER_DEFS) {
     var def      = WORKER_DEFS[type];
     var count    = S.workers[type] || 0;
     var cost     = workerCost(type);
     var afford   = S.resources.gold >= cost;
-
-    var card = document.createElement('div');
-    card.className = 'worker-card';
-    card.innerHTML =
+    html +=
+      '<div class="worker-card">' +
       '<img class="card-icon" src="' + ICONS[def.icon] + '" alt="' + def.name + '" onerror="this.style.display=\'none\'">' +
       '<div class="card-info">' +
         '<div class="card-name">' + def.name + ' <span class="card-count">' + count + '</span></div>' +
@@ -139,9 +137,10 @@ function renderWorkers() {
       '</div>' +
       '<button class="btn-hire' + (afford ? '' : ' disabled') + '" onclick="hireWorker(\'' + type + '\')">' +
         'Hire<br><span class="cost">' + fmt(cost) + 'g</span>' +
-      '</button>';
-    container.appendChild(card);
+      '</button>' +
+      '</div>';
   }
+  if (container.innerHTML !== html) container.innerHTML = html;
 }
 
 // ----------------------------------------------------------------
@@ -150,8 +149,8 @@ function renderWorkers() {
 function renderBuildings() {
   var container = document.getElementById('buildings-list');
   if (!container) return;
-  container.innerHTML = '';
 
+  var html = '';
   for (var type in BUILDING_DEFS) {
     var def    = BUILDING_DEFS[type];
     var count  = S.buildings[type] || 0;
@@ -167,10 +166,13 @@ function renderBuildings() {
 
     var btnClass = 'btn-build' + (atMax ? ' at-max' : (!meetsR || !afford ? ' disabled' : ''));
 
-    var card = document.createElement('div');
-    card.className = 'building-card' + (!meetsR ? ' locked' : '');
-    card.innerHTML =
-      '<img class="card-icon" src="' + ICONS[def.icon] + '" alt="' + def.name + '" onerror="this.style.display=\'none\'">' +
+    var iconHtml = BUILDING_SVGS[type]
+      ? '<div class="card-icon bsvg">' + BUILDING_SVGS[type] + '</div>'
+      : '<img class="card-icon" src="' + ICONS[def.icon] + '" alt="' + def.name + '" onerror="this.style.display=\'none\'">';
+
+    html +=
+      '<div class="building-card' + (!meetsR ? ' locked' : '') + '">' +
+      iconHtml +
       '<div class="card-info">' +
         '<div class="card-name">' + def.name +
           (def.max > 1
@@ -182,9 +184,10 @@ function renderBuildings() {
       '</div>' +
       '<button class="' + btnClass + '" onclick="buildBuilding(\'' + type + '\')"' + (atMax || !meetsR ? ' disabled' : '') + '>' +
         (atMax ? 'MAX' : 'Build') +
-      '</button>';
-    container.appendChild(card);
+      '</button>' +
+      '</div>';
   }
+  if (container.innerHTML !== html) container.innerHTML = html;
 }
 
 // ----------------------------------------------------------------
@@ -201,8 +204,8 @@ function renderArmy() {
 
   var container = document.getElementById('unit-list');
   if (!container) return;
-  container.innerHTML = '';
 
+  var html = '';
   for (var type in UNIT_DEFS) {
     var def      = UNIT_DEFS[type];
     var unlocked = isUnitUnlocked(type);
@@ -216,18 +219,18 @@ function renderArmy() {
     var canTrain = unlocked && afford && !atCap;
     var btnClass = 'btn-train' + (canTrain ? '' : ' disabled');
 
-    var card = document.createElement('div');
-    card.className = 'unit-card' + (unlocked ? '' : ' locked');
-    card.innerHTML =
+    html +=
+      '<div class="unit-card' + (unlocked ? '' : ' locked') + '">' +
       '<img class="card-icon" src="' + ICONS[def.icon] + '" alt="' + def.name + '" onerror="this.style.display=\'none\'">' +
       '<div class="card-info">' +
         '<div class="card-name">' + def.name + ' <span class="card-count">' + count + '</span></div>' +
         '<div class="card-desc">ATK ' + def.attack + ' | ' + def.upkeep + ' food/s upkeep</div>' +
         '<div class="card-cost">' + costStr + '</div>' +
       '</div>' +
-      '<button class="' + btnClass + '" onclick="trainUnit(\'' + type + '\')"' + (!canTrain ? ' disabled' : '') + '>Train</button>';
-    container.appendChild(card);
+      '<button class="' + btnClass + '" onclick="trainUnit(\'' + type + '\')"' + (!canTrain ? ' disabled' : '') + '>Train</button>' +
+      '</div>';
   }
+  if (container.innerHTML !== html) container.innerHTML = html;
 }
 
 // ----------------------------------------------------------------
@@ -253,25 +256,24 @@ function renderUpgrades() {
   ['economy','military','defense'].forEach(function(tree) {
     var container = document.getElementById('upgrades-' + tree);
     if (!container) return;
-    container.innerHTML = '';
 
+    var html = '';
     UPGRADE_DEFS.filter(function(u){ return u.tree === tree; }).forEach(function(def) {
       var purchased = isUpgradePurchased(def.id);
       var afford    = canAffordUpgrade(def);
       var costStr   = Object.entries(def.cost).map(function(e){ return fmt(e[1]) + ' ' + e[0]; }).join(', ');
-
-      var card = document.createElement('div');
-      card.className = 'upgrade-card' + (purchased ? ' purchased' : '');
-      card.innerHTML =
+      html +=
+        '<div class="upgrade-card' + (purchased ? ' purchased' : '') + '">' +
         '<img class="card-icon small" src="' + ICONS[def.icon] + '" alt="" onerror="this.style.display=\'none\'">' +
         '<div class="card-info">' +
           '<div class="card-name">' + def.name + '</div>' +
           '<div class="card-desc">' + def.desc + '</div>' +
           '<div class="card-cost">' + (purchased ? '✓ Researched' : costStr) + '</div>' +
         '</div>' +
-        (purchased ? '' : '<button class="btn-research' + (afford ? '' : ' disabled') + '" onclick="buyUpgrade(\'' + def.id + '\')">Research</button>');
-      container.appendChild(card);
+        (purchased ? '' : '<button class="btn-research' + (afford ? '' : ' disabled') + '" onclick="buyUpgrade(\'' + def.id + '\')">Research</button>') +
+        '</div>';
     });
+    if (container.innerHTML !== html) container.innerHTML = html;
   });
 }
 
